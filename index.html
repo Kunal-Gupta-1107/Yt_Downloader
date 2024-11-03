@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Video Downloader</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css">
+    <!-- <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}"> -->
+</head>
+<body>
+    <div class="container">
+        <h1>YouTube Video Downloader</h1>
+        <input type="text" id="videoLink" placeholder="Enter YouTube Video/Short Link" required>
+        
+        <div class="options">
+            <label for="quality">Quality:</label>
+            <select id="quality">
+                <option value="1080p">1080p</option>
+                <option value="720p">720p</option>
+                <option value="480p">480p</option>
+                <option value="360p">360p</option>
+            </select>
+
+            <label for="format">Format:</label>
+            <select id="format">
+                <option value="mp4">MP4</option>
+                <option value="mp3">MP3</option>
+            </select>
+        </div>
+
+        <button onclick="downloadVideo()">Download</button>
+        <div id="loading" style="display: none;">Downloading...</div>
+    </div>
+
+    <script>
+        // Function to handle download
+        async function downloadVideo() {
+            const videoLink = document.getElementById("videoLink").value;
+            const quality = document.getElementById("quality").value;
+            const format = document.getElementById("format").value;
+            const loadingIndicator = document.getElementById("loading");
+
+            if (!videoLink) {
+                alert("Please enter a YouTube video link.");
+                return;
+            }
+
+            // Show loading indicator
+            loadingIndicator.style.display = "block";
+
+            try {
+                const response = await fetch(`http://127.0.0.1:5000/download?url=${encodeURIComponent(videoLink)}&quality=${quality}&format=${format}`);
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const link = document.createElement("a");
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `youtube_video.${format}`;
+                    link.click();
+                } else {
+                    alert("Failed to download video");
+                }
+            } catch (error) {
+                alert("An error occurred while downloading. Please try again.");
+                console.error("Download error:", error);
+            } finally {
+                // Hide loading indicator
+                loadingIndicator.style.display = "none";
+            }
+        }
+    </script>
+</body>
+</html>
