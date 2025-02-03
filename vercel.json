@@ -4,6 +4,7 @@
     { "src": "api/download.js", "use": "@vercel/node" }
   ],
   "routes": [
-    { "src": "/api/(.*)", "dest": "/api/download.js" }
+    { "src": "/api/(.*)", "dest": "/api/download.js" },
+    { "src": "/", "dest": "/index.html" }
   ]
 }
