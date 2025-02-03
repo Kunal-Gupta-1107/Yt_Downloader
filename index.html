@@ -5,44 +5,96 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YouTube Downloader</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css">
-    <!-- <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}"> -->
 </head>
 <body>
     <div class="container">
         <h1>YouTube Downloader</h1>
-        <form id="downloadForm" onsubmit="downloadVideo(event)">
+        <form id="downloadForm">
             <label for="url">YouTube URL:</label>
             <input type="text" id="url" name="url" required>
 
             <label for="quality">Quality:</label>
             <select id="quality" name="quality" required>
-                <option value="144">144p</option>
-                <option value="360">360p</option>
-                <option value="720">720p</option>
-                <option value="1080">1080p</option>
-            </select>
+                </select>
 
             <label for="format">Format:</label>
             <select id="format" name="format" required>
-                <option value="mp3">MP3</option>
-                <option value="mp4">MP4</option>
-            </select>
+               </select>
 
             <button type="submit">Download</button>
-        </form>
+            <div id="status"></div>  </form>
     </div>
 
     <script>
-        function downloadVideo(event) {
+        const form = document.getElementById('downloadForm');
+        const statusDiv = document.getElementById('status');
+        const qualitySelect = document.getElementById('quality');
+        const formatSelect = document.getElementById('format');
+
+
+        form.addEventListener('submit', async (event) => {
             event.preventDefault();
+            statusDiv.textContent = "Processing..."; // Show processing message
+
             const url = document.getElementById('url').value;
             const quality = document.getElementById('quality').value;
             const format = document.getElementById('format').value;
 
-            const downloadUrl = `/api/download?url=${encodeURIComponent(url)}&quality=${quality}&format=${format}`;
-            window.location.href = downloadUrl;
+            try {
+                const response = await fetch(`/api/download?url=${encodeURIComponent(url)}&quality=${quality}&format=${format}`);
+
+                if (!response.ok) {
+                    const errorData = await response.json();// Try to get error
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`); // Show error message
+                }
+
+                // Handle the download - using a hidden link for better compatibility
+                const blob = await response.blob();
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = getFileNameFromResponse(response); // Extract suggested filename
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                statusDiv.textContent = "Download complete!";
+
+            } catch (error) {
+                statusDiv.textContent = `Error: ${error.message}`;
+                console.error("Download error:", error); // Log for debugging
+            }
+        });
+
+        // Function to get the filename from the Content-Disposition header
+        function getFileNameFromResponse(response) {
+            const contentDisposition = response.headers.get('Content-Disposition');
+            if (contentDisposition) {
+                const filenameMatch = contentDisposition.match(/filename="([^"]*)"/);
+                if (filenameMatch) {
+                    return filenameMatch;
+                }
+            }
+          return 'downloaded_file'; // Fallback filename
         }
+
+        // Populate quality and format options (Example - you'd likely get this from the server)
+        const availableQualities = ["144", "360", "720", "1080"]; // Replace with server data
+        const availableFormats = ["mp3", "mp4"]; // Replace with server data
+
+        availableQualities.forEach(q => {
+            const option = document.createElement('option');
+            option.value = q;
+            option.text = `${q}p`;
+            qualitySelect.appendChild(option);
+        });
+
+        availableFormats.forEach(f => {
+            const option = document.createElement('option');
+            option.value = f;
+            option.text = f.toUpperCase();
+            formatSelect.appendChild(option);
+        });
     </script>
 </body>
 </html>
