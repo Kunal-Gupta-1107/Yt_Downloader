@@ -15,14 +15,15 @@
 
             <label for="quality">Quality:</label>
             <select id="quality" name="quality" required>
-                </select>
+            </select>
 
             <label for="format">Format:</label>
             <select id="format" name="format" required>
-               </select>
+            </select>
 
             <button type="submit">Download</button>
-            <div id="status"></div>  </form>
+            <div id="status"></div>
+        </form>
     </div>
 
     <script>
@@ -31,10 +32,9 @@
         const qualitySelect = document.getElementById('quality');
         const formatSelect = document.getElementById('format');
 
-
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
-            statusDiv.textContent = "Processing..."; // Show processing message
+            statusDiv.textContent = "Processing...";
 
             const url = document.getElementById('url').value;
             const quality = document.getElementById('quality').value;
@@ -44,15 +44,20 @@
                 const response = await fetch(`/api/download?url=${encodeURIComponent(url)}&quality=${quality}&format=${format}`);
 
                 if (!response.ok) {
-                    const errorData = await response.json();// Try to get error
-                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`); // Show error message
+                    const errorData = await response.json();
+                    statusDiv.textContent = `Error: ${errorData.error}`;
+                    console.error("Server Error:", errorData); // Log the detailed error
+
+                    if (errorData.errorCode === 'INVALID_URL') {
+                        // Handle invalid URL specifically if needed
+                    } // ... handle other error codes
+                    return; // Stop here if there's an error
                 }
 
-                // Handle the download - using a hidden link for better compatibility
                 const blob = await response.blob();
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
-                link.download = getFileNameFromResponse(response); // Extract suggested filename
+                link.download = getFileNameFromResponse(response);
                 link.style.display = 'none';
                 document.body.appendChild(link);
                 link.click();
@@ -61,25 +66,26 @@
                 statusDiv.textContent = "Download complete!";
 
             } catch (error) {
-                statusDiv.textContent = `Error: ${error.message}`;
-                console.error("Download error:", error); // Log for debugging
+                statusDiv.textContent = `Client-side Error. Check console`;
+                console.error("Fetch error:", error);
             }
         });
 
-        // Function to get the filename from the Content-Disposition header
         function getFileNameFromResponse(response) {
             const contentDisposition = response.headers.get('Content-Disposition');
             if (contentDisposition) {
                 const filenameMatch = contentDisposition.match(/filename="([^"]*)"/);
                 if (filenameMatch) {
-                    return filenameMatch;
+                    return filenameMatch[1];
                 }
             }
-          return 'downloaded_file'; // Fallback filename
+            return 'downloaded_file';
         }
 
-        // Populate quality and format options (Example - you'd likely get this from the server)
-        const availableQualities = ["144", "360", "720", "1080"]; // Replace with server data
+        // --- Populate quality and format options (Example) ---
+        // In a real application, you would fetch these from the server
+        // after the user enters the URL.
+        const availableQualities = ["144", "360", "720", "1080"];  // Replace with server data
         const availableFormats = ["mp3", "mp4"]; // Replace with server data
 
         availableQualities.forEach(q => {
