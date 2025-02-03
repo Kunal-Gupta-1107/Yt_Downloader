@@ -1,0 +1,9 @@
+{
+  "name": "youtube-downloader",
+  "version": "1.0.0",
+  "description": "Serverless function to download YouTube videos",
+  "main": "index.js",
+  "dependencies": {
+    "ytdl-core": "^4.9.1"
+  }
+}
