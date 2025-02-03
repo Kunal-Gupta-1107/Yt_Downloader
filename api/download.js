@@ -4,7 +4,7 @@ module.exports = async (req, res) => {
     try {
         const { url, quality, format } = req.query;
 
-        if (!url || !quality || !format) {
+        if (!url ||!quality ||!format) {
             return res.status(400).json({ error: 'Missing required parameters', errorCode: 'MISSING_PARAMETERS' });
         }
 
@@ -14,27 +14,23 @@ module.exports = async (req, res) => {
 
         const info = await ytdl.getInfo(url);
 
-        // Find the requested format and quality
         let chosenFormat;
-        if (format === 'mp3'){
+        if (format === 'mp3') {
             chosenFormat = ytdl.chooseFormat(info.formats, { quality: 'highestaudio', filter: 'audioonly' });
-        }else{
-            chosenFormat = ytdl.chooseFormat(info.formats, { quality, filter: 'videoandaudio' });
+        } else {
+            chosenFormat = ytdl.chooseFormat(info.formats, { quality, filter: 'videoandaudio' }); // Or 'videoonly' if needed
         }
 
         if (!chosenFormat) {
             return res.status(400).json({ error: 'Requested quality/format not available', errorCode: 'FORMAT_NOT_AVAILABLE' });
         }
 
-        const videoFormat = format === 'mp3' ? 'audioonly' : 'videoandaudio';
         const stream = ytdl(url, { format: chosenFormat });
 
-        const filename = `${info.videoDetails.title}.${format}`; // Use video title
-        res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`); // Encode filename
-        res.setHeader('Content-Type', chosenFormat.mimeType); // Use the mimeType from chosenFormat
+        const filename = `${info.videoDetails.title}.${format}`;
+        res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
+        res.setHeader('Content-Type', chosenFormat.mimeType);
 
-        // Handle Content-Length for better progress bars
-        res.setHeader('Accept-Ranges', 'bytes');
         if (chosenFormat.contentLength) {
             res.setHeader('Content-Length', chosenFormat.contentLength);
         } else {
@@ -45,7 +41,7 @@ module.exports = async (req, res) => {
 
         stream.on('error', (err) => {
             console.error('Download stream error:', err);
-            if (!res.headersSent) { // Only send error if headers haven't been sent
+            if (!res.headersSent) {
                 res.status(500).json({ error: 'Download failed', errorCode: 'DOWNLOAD_ERROR', details: err.message });
             }
         });
@@ -55,7 +51,7 @@ module.exports = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('General error:', error); // Log the full error for debugging
+        console.error('General error:', error);
         res.status(500).json({ error: 'An error occurred', errorCode: 'GENERAL_ERROR', details: error.message });
     }
 };
