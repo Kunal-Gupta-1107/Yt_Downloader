@@ -1,9 +1,12 @@
 {
-  "version": 2,
-  "builds": [
-    { "src": "api/download.js", "use": "@vercel/node" }
-  ],
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/api/download.js" }
-  ]
+  "name": "youtube-downloader",
+  "version": "1.0.0",
+  "description": "Serverless function to download YouTube videos",
+  "main": "index.js",  // Optional field. Can be omitted if not needed.
+  "dependencies": {
+    "ytdl-core": "^4.9.1"
+  },
+  "scripts": {
+    "start": "node api/download.js"
+  }
 }
